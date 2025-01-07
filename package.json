@@ -6,13 +6,14 @@
     "@testing-library/react": "^16.1.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "cra-template": "1.2.0",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.7",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
-    "typescript": "^5.7.2",
+    "typescript": "^4.9.5",
     "web-vitals": "^4.2.4"
   },
   "scripts": {
