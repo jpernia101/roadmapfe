@@ -7,20 +7,25 @@ import { InputGroup } from "react-bootstrap";
 import { TasksContextData } from "../context/TasksContext";
 
 const TaskData = ( {id}: {id: number} ) => {
-    const {removeTask} = useContext(TasksContextData);
+    const {removeTask, updateTask} = useContext(TasksContextData);
+
+    const handleDataChange = ( id, key, e ) => {
+        
+        updateTask(id,key, e.target.value);
+    }
     return(
         <Row key={id}>
             <Col md={5}>
                 <FormGroup>
                     <Form.Label>Task Description</Form.Label>
-                    <Form.Control type='text' placeholder="Put a small description of your task"/>
+                    <Form.Control onChange={(event) => handleDataChange(id, 'desc', event)} type='text' placeholder="Put a small description of your task"/>
                 </FormGroup>
                 
             </Col>
             <Col md>
             <FormGroup>
                     <Form.Label>Priority</Form.Label>
-                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required>
+                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required onChange={(event) => handleDataChange(id, 'priority', event)}>
                         <option key='placeholder' hidden value=''> -- Select an Option -- </option>
                         <option>Low</option>
                         <option>Medium</option>
@@ -32,9 +37,9 @@ const TaskData = ( {id}: {id: number} ) => {
                 <FormGroup>
                     <Form.Label>Due Date (optional)</Form.Label>
                     <InputGroup>
-                        <Form.Control type="date" placeholder="mm/dd/yyyy"/>
+                        <Form.Control type="date" placeholder="mm/dd/yyyy" onChange={(event) => updateTask(id, 'dueDate', new Date(event.target.value))}/>
                         <InputGroup.Text>
-                            <i className="bi bi-calender"></i>
+                            <i className="bi bi-calendar"></i>
                         </InputGroup.Text>
                     </InputGroup>
                 </FormGroup>
@@ -42,7 +47,7 @@ const TaskData = ( {id}: {id: number} ) => {
             <Col md>
                 <FormGroup>
                     <Form.Label>Frequency</Form.Label>
-                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required>
+                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required onChange={(event) => handleDataChange(id, 'frequency', event)}>
                         <option key='placeholder' hidden value=''>-- Select an Option --</option>
                         <option>1 Day</option>
                         <option>2 Days</option>

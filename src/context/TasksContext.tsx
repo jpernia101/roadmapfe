@@ -21,13 +21,15 @@ const initialTask: Task = {
 interface TasksContextType {
     tasks : Array<Task>,
     addTask: () => void,
-    removeTask: (id: number) => void
+    removeTask: (id: number) => void,
+    updateTask: (id:number, key: string, val: any) => void
 }
 
 const initialContext: TasksContextType = {
     tasks : [initialTask],
     addTask: () => {},
-    removeTask: () => {}
+    removeTask: () => {},
+    updateTask: () => {}
 }
 
 
@@ -54,8 +56,14 @@ export const TasksContextProvider = ({ children }: { children: ReactNode }) => {
         setTasks((prev) => prev.filter((task) => task.id !== id));
     };
 
+    const updateTask = (id, key , val) =>{
+    
+        setTasks( prev => prev.map( x => x.id === id ? { ...x, [key]: val} : x
+        ))
+    }
+
     return (
-        <TasksContextData.Provider value={{ tasks, addTask, removeTask }}>
+        <TasksContextData.Provider value={{ tasks, addTask, removeTask, updateTask }}>
             {children}
         </TasksContextData.Provider>
     );

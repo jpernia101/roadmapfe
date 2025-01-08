@@ -4,7 +4,7 @@ import  Form  from "react-bootstrap/Form";
 import { Button } from "react-bootstrap";
 import TaskData from "../components/TaskData";
 import { TasksContextData } from "../context/TasksContext";
-import { alive } from "../services/TaskService";
+import { submitTask } from "../services/TaskService";
 
 const TasksForm = () => {
     const {tasks, addTask} = useContext(TasksContextData);
@@ -16,7 +16,7 @@ const TasksForm = () => {
             { tasks.map( x => <TaskData id={x.id} key={x.id}/>)}
             <div style={{display: "flex", alignContent:'center', justifyContent:'center', padding:'5px 10px 0 10px'}}>
                 <Button style={{margin:'10px'}} onClick={() => addTask()} >Add Task</Button>
-                <Button style={{margin:'10px'}}  onClick={() => alive()}>Submit</Button>
+                <Button style={{margin:'10px'}}  onClick={() => submitTask(tasks)}>Submit</Button>
             </div>                
             </Form>
         </Container>
