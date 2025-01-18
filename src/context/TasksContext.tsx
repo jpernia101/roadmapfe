@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 import React from "react";
 
 let taskCounter = 0;
@@ -9,7 +9,6 @@ export interface Task {
     dueDate?: Date | null,
     frequency: string
 }
-
 const initialTask: Task = {
     id: ++taskCounter,
     desc: '',
@@ -17,14 +16,12 @@ const initialTask: Task = {
     frequency: '1',
     dueDate: null
 }
-
 interface TasksContextType {
     tasks : Array<Task>,
     addTask: () => void,
     removeTask: (id: number) => void,
     updateTask: (id:number, key: string, val: any) => void
 }
-
 const initialContext: TasksContextType = {
     tasks : [initialTask],
     addTask: () => {},
@@ -57,7 +54,6 @@ export const TasksContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateTask = (id, key , val) =>{
-    
         setTasks( prev => prev.map( x => x.id === id ? { ...x, [key]: val} : x
         ))
     }
@@ -69,4 +65,35 @@ export const TasksContextProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-//
+export interface ScheduleItem{
+    id: number | string,
+    when: Array<any>,
+    reasoning: string
+}
+
+interface ScheduleContext{
+    schedule: Array<ScheduleItem> | null,
+    setSchedule: (schedule: Array<ScheduleItem>) => void;
+}
+
+export const ScheduleContext = createContext<ScheduleContext | undefined>(undefined);
+
+export const ScheduleContextProvider = ({children}: {children : ReactNode}) =>{
+    const [schedule , setSchedule] = useState<Array<ScheduleItem>| null>(null);
+
+    return(
+        <ScheduleContext.Provider value={{schedule, setSchedule}}>
+            {children}
+        </ScheduleContext.Provider>
+    )
+
+}
+
+export const useScheduleContext = () =>{
+    let context = useContext(ScheduleContext);
+
+    if(!context){
+        throw new Error("useScheduleContext must be used within a ScheduleContextProvider");
+    }
+    return context;
+}

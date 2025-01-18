@@ -2,15 +2,19 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './components/Header.tsx';
 import TasksForm from './pages/TasksForm';
-import {TasksContextProvider} from './context/TasksContext'
+import {ScheduleContextProvider, TasksContextProvider} from './context/TasksContext'
+import WeeklyScheduleCanvas from './pages/WeeklySchedule'
 function App() {
   return (
     <div className='App-header'>
-      <TasksContextProvider>
+      
         <Header/>
-        <TasksForm/>
+        <TasksContextProvider>
+          <ScheduleContextProvider>
+            <TasksForm/>
+            <WeeklyScheduleCanvas/>
+          </ScheduleContextProvider>
       </TasksContextProvider>
-
     </div>
   );
 }

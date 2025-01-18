@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Task } from "../context/TasksContext";
+import {validResponse} from '../test/constants.js'
 
 export const alive = async () =>{
     try {
@@ -15,13 +16,10 @@ export const alive = async () =>{
 
 export const submitTask = async (tasks: Array<Task>) =>{
     try {
-        const obj = {
-            Tasks : tasks
-        }
-        const res = await axios.post('http://localhost:3001/submitTasks', obj)
-        
+        //{Tasks:tasks} because thats the expected data format in the backend;
+        const res = await axios.post('http://localhost:3001/submitTasks', {Tasks: tasks})
         console.log('RES', res);
-        
+        return res.data;
     } catch (error) {
         console.log(error);
     }
