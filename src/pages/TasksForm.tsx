@@ -7,15 +7,17 @@ import { useScheduleContext, TasksContextData } from "../context/TasksContext";
 import { submitTask } from "../services/TaskService";
 import {validResponse} from '../test/constants.js'
 
-const TasksForm = () => {
+const TasksForm = ({isLoading}) => {
     const {tasks, addTask,} = useContext(TasksContextData);
     const {setSchedule} = useScheduleContext();
     
-    const handleSubmit = () =>{
+    const handleSubmit = async () =>{
         // const response = await submitTask(tasks);
-        // setSchedule(response?.schedule)
+        // setSchedule(response)
         
         setSchedule(validResponse)
+        isLoading(true);
+
 
     }
     

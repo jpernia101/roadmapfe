@@ -66,6 +66,7 @@ export const TasksContextProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export interface ScheduleItem{
+    desc: string,
     id: number | string,
     when: Array<any>,
     reasoning: string

@@ -4,15 +4,16 @@ import Header from './components/Header.tsx';
 import TasksForm from './pages/TasksForm';
 import {ScheduleContextProvider, TasksContextProvider} from './context/TasksContext'
 import WeeklyScheduleCanvas from './pages/WeeklySchedule'
+import { useState } from 'react';
 function App() {
+  let [loading, setIsLoading] = useState(false);
   return (
     <div className='App-header'>
       
         <Header/>
         <TasksContextProvider>
           <ScheduleContextProvider>
-            <TasksForm/>
-            <WeeklyScheduleCanvas/>
+            {loading ? <WeeklyScheduleCanvas isLoading={setIsLoading}/> : <TasksForm isLoading={setIsLoading}/>}
           </ScheduleContextProvider>
       </TasksContextProvider>
     </div>
