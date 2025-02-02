@@ -1,23 +1,29 @@
 import React, {useEffect, useRef, useState} from "react";
 import { Button, Col, Container, Row } from "react-bootstrap";
-import { Stage, Layer, Rect, Text, Line } from "react-konva";
 import { ScheduleItem, useScheduleContext } from "../context/TasksContext";
+import { DndContext , closestCenter} from "@dnd-kit/core";
+import DragableTask from "../components/DragableTask";
+import DropableTask from "../components/DropableTask";
+import {validResponse} from '../test/constants.js'
 
 const WeeklyScheduleCanvas = ( {isLoading}) => {
-    const {schedule} = useScheduleContext();
+    const {schedule, setSchedule} = useScheduleContext();
     const parentDimensionRef = useRef<HTMLDivElement>(null);
     const [dimensions , setDimensions] = useState( {width: 0, height : 0})
+    const [startPoints , setStartPoints] = useState({x: null, y : null})
+    const [endPoints , setEndPoints] = useState({x: null, y : null})
 
     const organizeScheduleByTime = () => {
         let newOrder: any = [];
 
         if(schedule){
-            newOrder = schedule.flatMap( outer => {
-                return outer.when.map( x => ({
+            newOrder = schedule.flatMap( (outer, i) => {
+                return outer.when.map( (x,j) => ({
                     desc: outer.desc,
                     reasoning : outer.reasoning,
                     time: x.startTime,
-                    day: x.day
+                    day: x.day,
+                    id: `${outer.id}:${i}:${j}`
                 }))
             })
             .sort( (a,b) => {
@@ -52,7 +58,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
     const days = ['Sun', 'Mon', 'Tue' ,"Wed","Thu", "Fri","Sat" ];
     const hours = ['04:00','05:00','06:00','07:00','08:00', '09:00', '10:00','11:00','12:00', '13:00', '14:00', '15:00',
     '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00','24:00'];
-
+    
     
 
     const DrawDays = () => {
@@ -66,6 +72,46 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
                 
             )
         })
+    }
+
+    const handleDragStart = (e) => {
+        const {active} = e;
+        
+        if(active.data.current.parentId){
+            const [x,y] = active.data.current.parentId.split(':')
+            console.log(x,"x",y,'y')
+            setStartPoints({x,y})
+        }
+        
+        
+    }
+    const handleDragEnd = (e) => {
+        const { active, over } = e;
+        if (!over) return; // Don't do anything if not dropped over a valid area
+        let currItem = active.id;
+        if(schedule){
+            const [x,y] = over.id.split(':');
+
+            
+            let newTime = hours[x];
+            let newDay =  days[y]
+
+            setSchedule((prevSchedule) => {
+
+
+                const updatedSchedule = [...prevSchedule];
+                const taskToUpdate = updatedSchedule.find( x => x.id = currItem);
+                console.log(updatedSchedule);
+                console.log(taskToUpdate);
+                return updatedSchedule;
+            });
+            
+        }
+        const draggedTaskId = active.id;  // The dragged task
+        const newColumnId = over.id; // The new drop location
+
+        console.log(schedule);
+        console.log(`Task ${draggedTaskId} dropped on ${newColumnId}`);
     }
 
     const DrawBody = () => {
@@ -86,7 +132,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
          */
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
-                const task = organizedData.find((y) => {
+                const task: Array<ScheduleItem> | null = organizedData.find((y) => {
                     //do this since our days are only the first three letters but out response spells out the whole day
                     let substringOfDay = y.day.substring(0,3)
                     let time = y.time.split(":")[1]
@@ -102,8 +148,8 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
             return { time: hour, tasks }; // Return an object with time and the array of tasks for 7 days
         });
 
-        // console.log(groupedByTimeAndTask, 'time object')
         
+        console.log(groupedByTimeAndTask)
 
         return groupedByTimeAndTask.map( ({time,tasks}, i) => {
             return(
@@ -115,30 +161,29 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
                         tasks.map( (task, j) => {
                             if(task === null){
                                 return(
-                                    <Col key={j} style={{border: '.5px solid black'}} >
+                                    <DropableTask key={j} id={`${i}:${j}`}>
                                         <h4
                                             style={{
                                                 fontFamily: 'Nunito',
                                                 fontSize: fontSize
                                             }}
-                                        >
-                                            
+                                        >         
                                         </h4>
-                                    </Col>
+                                    </DropableTask>   
                                     )
                             }
                             else{
                                 return (
-                                    <Col key={j} style={{border: '.5px solid black'}} > 
-                                        <div>
-                                            <h4  style={{ fontFamily: 'Nunito', fontSize: fontSize, fontWeight:'bold'}}> {task.desc} </h4>
-                                        </div>
-                                    </Col>)
+                                    <DropableTask key={j} id={`${i}:${j}`}>
+                                        <DragableTask id={task.id} desc={task.desc} data={ {parentId: `${i}:${j}`}}/>
+                                    </DropableTask>    
+                                    )
                             }
                             
                         }) 
                     }
                 </Row>
+        
             )
         })
     }
@@ -148,22 +193,24 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
     }
     return(
         <div>
-        <Container className="justify-content-sm-start" ref={parentDimensionRef }
-        //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
-         style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)', color:'black'}}
-        >
-            <div style={{marginLeft: dimensions.width * .1}}>
-                <Row>
-                    {DrawDays()}
-                </Row>
-            </div>
-            <div>
-                <Row>
-                    {DrawBody()}
-                </Row>
-            </div>
+        <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}collisionDetection={closestCenter}>
+            <Container className="justify-content-sm-start" ref={parentDimensionRef }
+            //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
+            style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(125,155,190,1) 47%, rgba(253,187,45,1) 100%)', color:'black'}}
+            >
+                <div style={{marginLeft: dimensions.width * .1}}>
+                    <Row>
+                        {DrawDays()}
+                    </Row>
+                </div>
+                <div>
+                    <Row>
+                        {DrawBody()}
+                    </Row>
+                </div>
 
-        </Container>
+            </Container>
+        </DndContext>
             <div style={
                 {display: "flex", justifyContent:'space-around', margin: "1% 0 0 3%" }
             }> 
