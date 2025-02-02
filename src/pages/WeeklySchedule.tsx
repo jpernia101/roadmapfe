@@ -7,24 +7,45 @@ import DropableTask from "../components/DropableTask";
 import {validResponse} from '../test/constants.js'
 
 const WeeklyScheduleCanvas = ( {isLoading}) => {
+    interface reorderedScheduleType  {
+        id: string ,
+        reasoning: string,
+        time: string | Date,
+        day: string,
+        desc: string
+    }
+
+    const days = ['Sun', 'Mon', 'Tue' ,"Wed","Thu", "Fri","Sat" ];
+    const hours = ['04:00','05:00','06:00','07:00','08:00', '09:00', '10:00','11:00','12:00', '13:00', '14:00', '15:00',
+    '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00','24:00'];
+
     const {schedule, setSchedule} = useScheduleContext();
+    const [ reorderedSchedule, setreorderedSchedule ] = useState<Array<reorderedScheduleType | null>>([]);
     const parentDimensionRef = useRef<HTMLDivElement>(null);
     const [dimensions , setDimensions] = useState( {width: 0, height : 0})
     const [startPoints , setStartPoints] = useState({x: null, y : null})
     const [endPoints , setEndPoints] = useState({x: null, y : null})
 
-    const organizeScheduleByTime = () => {
-        let newOrder: any = [];
+    
+
+    const organizeScheduleByTime = () : Array<reorderedScheduleType| null> =>   {
+        let newOrder: Array<reorderedScheduleType| null> = [];
 
         if(schedule){
             newOrder = schedule.flatMap( (outer, i) => {
-                return outer.when.map( (x,j) => ({
+                return outer.when.map( (x,j) => {
+                    let timeIndex = hours.indexOf( x.startTime);
+                    let substringOfDay = x.day.substring(0,3)
+                    let dayIndex = days.indexOf(substringOfDay)
+                    let newId = `${outer.id}:${timeIndex}:${dayIndex}`
+                    return ({
+                    
                     desc: outer.desc,
                     reasoning : outer.reasoning,
                     time: x.startTime,
                     day: x.day,
-                    id: `${outer.id}:${i}:${j}`
-                }))
+                    id: newId
+                })})
             })
             .sort( (a,b) => {
                 if(a.time !== b.time){
@@ -49,20 +70,18 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
         handleResize();
         window.addEventListener('resize', handleResize);
 
+        const organizedData = organizeScheduleByTime();
+        setreorderedSchedule(organizedData);
         // Cleanup
         return () => window.removeEventListener('resize', handleResize);
-
     } ,[])
 
 
-    const days = ['Sun', 'Mon', 'Tue' ,"Wed","Thu", "Fri","Sat" ];
-    const hours = ['04:00','05:00','06:00','07:00','08:00', '09:00', '10:00','11:00','12:00', '13:00', '14:00', '15:00',
-    '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00','24:00'];
+    
     
     
 
     const DrawDays = () => {
-        
         return days.map( (text, i) => {
             const fontSize = dimensions.width * 0.02; 
             return (
@@ -89,20 +108,29 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
         const { active, over } = e;
         if (!over) return; // Don't do anything if not dropped over a valid area
         let currItem = active.id;
-        if(schedule){
+        if(reorderedSchedule){
             const [x,y] = over.id.split(':');
 
             
             let newTime = hours[x];
             let newDay =  days[y]
 
-            setSchedule((prevSchedule) => {
+            setreorderedSchedule((prevSchedule) => {
 
 
                 const updatedSchedule = [...prevSchedule];
-                const taskToUpdate = updatedSchedule.find( x => x.id = currItem);
+                const taskToUpdate = updatedSchedule.find( x => x.id === currItem);
+                console.log(taskToUpdate, "BEFOE");
+                console.log(updatedSchedule, "BEFoe");
+                if(taskToUpdate){
+                    taskToUpdate.day = newDay;
+                    taskToUpdate.time = newTime;
+                    let oldId = taskToUpdate.id.split(':')
+                    taskToUpdate.id = `${oldId[0]}:${x}:${y}`
+                }
+                
                 console.log(updatedSchedule);
-                console.log(taskToUpdate);
+                console.log(taskToUpdate, "AFTER");
                 return updatedSchedule;
             });
             
@@ -110,12 +138,13 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
         const draggedTaskId = active.id;  // The dragged task
         const newColumnId = over.id; // The new drop location
 
-        console.log(schedule);
+        console.log(reorderedSchedule);
         console.log(`Task ${draggedTaskId} dropped on ${newColumnId}`);
     }
 
     const DrawBody = () => {
-        const organizedData = organizeScheduleByTime();
+        // const organizedData = organizeScheduleByTime();
+        // setreorderedSchedule(organizedData);
         // console.log('organizedData', organizedData)
         const fontSize = dimensions.width * 0.015; 
     
@@ -132,7 +161,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
          */
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
-                const task: Array<ScheduleItem> | null = organizedData.find((y) => {
+                const task: Array<ScheduleItem> | null = reorderedSchedule.find((y) => {
                     //do this since our days are only the first three letters but out response spells out the whole day
                     let substringOfDay = y.day.substring(0,3)
                     let time = y.time.split(":")[1]
