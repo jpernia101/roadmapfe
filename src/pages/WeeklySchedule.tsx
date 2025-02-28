@@ -15,9 +15,29 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
         desc: string
     }
 
-    const days = ['Sun', 'Mon', 'Tue' ,"Wed","Thu", "Fri","Sat" ];
-    const hours = ['04:00','05:00','06:00','07:00','08:00', '09:00', '10:00','11:00','12:00', '13:00', '14:00', '15:00',
-    '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00','24:00'];
+    const days = ['SUN', 'MON', 'TUE' ,"WED","THU", "FRI","SAT" ];
+    const hours = [
+  "04:00", "04:30",
+  "05:00", "05:30",
+  "06:00", "06:30",
+  "07:00", "07:30",
+  "08:00", "08:30",
+  "09:00", "09:30",
+  "10:00", "10:30",
+  "11:00", "11:30",
+  "12:00", "12:30",
+  "13:00", "13:30",
+  "14:00", "14:30",
+  "15:00", "15:30",
+  "16:00", "16:30",
+  "17:00", "17:30",
+  "18:00", "18:30",
+  "19:00", "19:30",
+  "20:00", "20:30",
+  "21:00", "21:30",
+  "22:00", "22:30",
+  "23:00", "23:30",
+  '24:00'];
 
     const {schedule, setSchedule} = useScheduleContext();
     const [ reorderedSchedule, setreorderedSchedule ] = useState<Array<reorderedScheduleType | null>>([]);
@@ -34,7 +54,9 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
         if(schedule){
             newOrder = schedule.flatMap( (outer, i) => {
                 return outer.when.map( (x,j) => {
+                    console.log(x,'x');
                     let timeIndex = hours.indexOf( x.startTime);
+                    console.log(timeIndex,'timeindex');
                     let substringOfDay = x.day.substring(0,3)
                     let dayIndex = days.indexOf(substringOfDay)
                     let newId = `${outer.id}:${timeIndex}:${dayIndex}`
@@ -83,33 +105,33 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
 
     const DrawDays = () => {
         return days.map( (text, i) => {
-            const fontSize = dimensions.width * 0.02; 
+            const fontSize = dimensions.width * 0.025; 
             return (
                 <Col key={i}>
-                <h4  style={{ fontFamily: 'Nunito', fontSize: fontSize}}> {text} </h4>
+                    <h4  style={{ fontFamily: 'Roboto Slab', fontSize: fontSize}}> {text} </h4>
                 </Col>
                 
             )
         })
     }
 
-    const handleDragStart = (e) => {
-        const {active} = e;
-        
-        if(active.data.current.parentId){
-            const [x,y] = active.data.current.parentId.split(':')
-            console.log(x,"x",y,'y')
-            setStartPoints({x,y})
-        }
-        
-        
-    }
     const handleDragEnd = (e) => {
         const { active, over } = e;
         if (!over) return; // Don't do anything if not dropped over a valid area
         let currItem = active.id;
         if(reorderedSchedule){
             const [x,y] = over.id.split(':');
+
+            for(let task of reorderedSchedule){
+                const taskId = task?.id.split(':'); 
+                console.log('taskid', taskId)
+                console.log('x', x)
+                console.log('y', y)
+                if(taskId[1] === x && taskId[2] === y){
+                    console.log('A TASK ALREADY EXIST HERE')
+                    return;
+                }
+            }
 
             
             let newTime = hours[x];
@@ -143,11 +165,8 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
     }
 
     const DrawBody = () => {
-        // const organizedData = organizeScheduleByTime();
-        // setreorderedSchedule(organizedData);
-        // console.log('organizedData', organizedData)
-        const fontSize = dimensions.width * 0.015; 
-    
+        const fontSize = dimensions.width * 0.015;
+        const timeSize = dimensions.width * 0.025;
         /**
          * OUR DATA WILL LOOK LIKE THIS Array<Array<{time: string, tasks: Array< ScheduleType | null>} >>
          * [null,null,null,null,{"desc": "taskkkkkkkk4","reasoning": "Eating with mom is a medium priority task, scheduled for the evening when both might be more available.","time": "18:00","day": "Thursday"},null, null]
@@ -179,12 +198,12 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
 
         
         console.log(groupedByTimeAndTask)
-
         return groupedByTimeAndTask.map( ({time,tasks}, i) => {
-            return(
+            const halfHourTimeSlot = time.split(':')[1] === "00" ? true : false 
+            return halfHourTimeSlot && (
                 <Row key={i} className="flex-nowrap">
-                    <Col style={{border: '.5px solid black'}}>
-                        <h4  style={{ fontFamily: 'Nunito', fontSize: fontSize}}> {time} </h4>
+                    <Col style={{border: '.5px solid black', display:'flex', alignItems:'center', justifyContent: 'center'}}>
+                        <h4  style={{ fontFamily: 'Roboto Slab', fontSize: timeSize}}> {time} </h4>
                     </Col>
                     {
                         tasks.map( (task, j) => {
@@ -204,7 +223,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
                             else{
                                 return (
                                     <DropableTask key={j} id={`${i}:${j}`}>
-                                        <DragableTask id={task.id} desc={task.desc} data={ {parentId: `${i}:${j}`}}/>
+                                        <DragableTask  id={task.id} desc={task.desc} data={ {parentId: `${i}:${j}`}}/>
                                     </DropableTask>    
                                     )
                             }
@@ -222,7 +241,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
     }
     return(
         <div>
-        <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}collisionDetection={closestCenter}>
+        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
             <Container className="justify-content-sm-start" ref={parentDimensionRef }
             //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
             style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(125,155,190,1) 47%, rgba(253,187,45,1) 100%)', color:'black'}}
