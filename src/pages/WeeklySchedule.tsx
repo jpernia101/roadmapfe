@@ -4,9 +4,11 @@ import { ScheduleItem, useScheduleContext } from "../context/TasksContext";
 import { DndContext , closestCenter} from "@dnd-kit/core";
 import DragableTask from "../components/DragableTask";
 import DropableTask from "../components/DropableTask";
+import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
 import {validResponse} from '../test/constants.js'
 
-const WeeklyScheduleCanvas = ( {isLoading}) => {
+const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     interface reorderedScheduleType  {
         id: string ,
         reasoning: string,
@@ -39,17 +41,26 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
   "23:00", "23:30",
   '24:00'];
 
-    const {schedule, setSchedule} = useScheduleContext();
-    const [ reorderedSchedule, setreorderedSchedule ] = useState<Array<reorderedScheduleType | null>>([]);
+    const {schedule} = useScheduleContext();
+    const [ reorderedSchedule, setreorderedSchedule ] = useState<Array<reorderedScheduleType | undefined>>([]);
     const parentDimensionRef = useRef<HTMLDivElement>(null);
     const [dimensions , setDimensions] = useState( {width: 0, height : 0})
-    const [startPoints , setStartPoints] = useState({x: null, y : null})
-    const [endPoints , setEndPoints] = useState({x: null, y : null})
+    const pdfRef = useRef(null);
+    const pdfGenerator = async () => {
+        console.log('generating pdf');
+        const elem = pdfRef.current;
+        const img = await toPng(elem, { 
+            quality: 1,
+            cacheBust: true, // Prevents caching issues
+            useCORS: true // Fixes cross-origin font issues
+        });
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        pdf.addImage(img, 'PNG', 0, 0, 210, 297); // A4 size in mm
+        pdf.save('weekly-schedule.pdf');
+    }
 
-    
-
-    const organizeScheduleByTime = () : Array<reorderedScheduleType| null> =>   {
-        let newOrder: Array<reorderedScheduleType| null> = [];
+    const organizeScheduleByTime = () : Array<reorderedScheduleType| undefined> =>   {
+        let newOrder: Array<reorderedScheduleType| undefined> = [];
 
         if(schedule){
             newOrder = schedule.flatMap( (outer, i) => {
@@ -127,7 +138,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
                 console.log('taskid', taskId)
                 console.log('x', x)
                 console.log('y', y)
-                if(taskId[1] === x && taskId[2] === y){
+                if(taskId?.[1] === x && taskId?.[2] === y){
                     console.log('A TASK ALREADY EXIST HERE')
                     return;
                 }
@@ -141,7 +152,7 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
 
 
                 const updatedSchedule = [...prevSchedule];
-                const taskToUpdate = updatedSchedule.find( x => x.id === currItem);
+                const taskToUpdate = updatedSchedule.find( x => x?.id === currItem);
                 console.log(taskToUpdate, "BEFOE");
                 console.log(updatedSchedule, "BEFoe");
                 if(taskToUpdate){
@@ -180,16 +191,19 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
          */
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
-                const task: Array<ScheduleItem> | null = reorderedSchedule.find((y) => {
+                const task: ScheduleItem | undefined  = reorderedSchedule.find((y) => {
                     //do this since our days are only the first three letters but out response spells out the whole day
-                    let substringOfDay = y.day.substring(0,3)
-                    let time = y.time.split(":")[1]
+                    let substringOfDay = y?.day.substring(0,3)
+                    if(y?.time  instanceof(Date) ){
+                        y.time = y.time.toString(); 
+                    }
+                    let time = y?.time.split(":")[1]
                     if(time === '30'){
                         let matchingHalfAndHour = hour.split(':')[0]+ ':';
-                        return substringOfDay === day && y.time === matchingHalfAndHour + '30'
+                        return substringOfDay === day && y?.time === matchingHalfAndHour + '30'
                     }
-                    return y.time === hour && substringOfDay === day
-                });
+                    return y?.time === hour && substringOfDay === day
+                }) as ScheduleItem | undefined; //casted reorderedSchedule to ScheduleItem
                 return task || null; // Either the task object or null
             });
         
@@ -237,33 +251,36 @@ const WeeklyScheduleCanvas = ( {isLoading}) => {
     }
 
     const backToPlannerBtn = () => {
-        isLoading(false)
+        setScheduleExist(false)
     }
     return(
         <div>
-        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-            <Container className="justify-content-sm-start" ref={parentDimensionRef }
-            //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
-            style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(125,155,190,1) 47%, rgba(253,187,45,1) 100%)', color:'black'}}
-            >
-                <div style={{marginLeft: dimensions.width * .1}}>
-                    <Row>
-                        {DrawDays()}
-                    </Row>
-                </div>
-                <div>
-                    <Row>
-                        {DrawBody()}
-                    </Row>
-                </div>
+            <div ref={pdfRef}>
+                <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+                    <Container className="justify-content-sm-start" ref={parentDimensionRef }
+                    //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
+                    style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(125,155,190,1) 47%, rgba(253,187,45,1) 100%)', color:'black'}}
+                    >
+                        <div>
+                            <Row style={{justifyContent:'center'}}>
+                                <Col/>
+                                {DrawDays()}
+                            </Row>
+                        </div>
+                        <div>
+                            <Row>
+                                {DrawBody()}
+                            </Row>
+                        </div>
 
-            </Container>
-        </DndContext>
+                    </Container>
+                </DndContext>
+        </div>
             <div style={
                 {display: "flex", justifyContent:'space-around', margin: "1% 0 0 3%" }
             }> 
                 <Button onClick={() => backToPlannerBtn()}>Back to planner</Button>
-                <Button>Export to PDF</Button>
+                <Button onClick={() => pdfGenerator()}>Export to PDF</Button>
             </div>
         </div>
     )

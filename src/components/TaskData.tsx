@@ -1,31 +1,45 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import  Form  from "react-bootstrap/Form";
 import { Button, FormGroup } from "react-bootstrap";
 import { InputGroup } from "react-bootstrap";
-import { TasksContextData } from "../context/TasksContext";
+import { Task, TasksContextData } from "../context/TasksContext";
 
 const TaskData = ( {id}: {id: number} ) => {
-    const {removeTask, updateTask} = useContext(TasksContextData);
+    const {removeTask, updateTask, tasks} = useContext(TasksContextData);
+
+    const [currentTask, setCurrentTask] = useState<Task | undefined>();
 
     const handleDataChange = ( id, key, e ) => {
         
         updateTask(id,key, e.target.value);
     }
+
+    useEffect( () =>{
+        let filteredTask = tasks.find( x => x.id === id);
+        setCurrentTask(filteredTask);
+    })
+    
     return(
         <Row key={id}>
             <Col md={5}>
+                <Form.Label>Task Description</Form.Label>
                 <FormGroup>
-                    <Form.Label>Task Description</Form.Label>
-                    <Form.Control onChange={(event) => handleDataChange(id, 'desc', event)} type='text' placeholder="Put a small description of your task"/>
+                    <Form.Control onChange={(event) => handleDataChange(id, 'desc', event)} value={currentTask?.desc || ""} type='text' placeholder="📝Put a small description of your task"/>
                 </FormGroup>
                 
             </Col>
             <Col md>
             <FormGroup>
                     <Form.Label>Priority</Form.Label>
-                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required onChange={(event) => handleDataChange(id, 'priority', event)}>
+                    <Form.Select 
+                        title="Pick Priority" 
+                        aria-label="Pick A Priority" 
+                        required 
+                        onChange={(event) => handleDataChange(id, 'priority', event)}
+                        value={currentTask?.priority || ""}
+                        >
                         <option key='placeholder' hidden value=''> -- Select an Option -- </option>
                         <option>Low</option>
                         <option>Medium</option>
@@ -34,20 +48,29 @@ const TaskData = ( {id}: {id: number} ) => {
                 </FormGroup>
             </Col>
             <Col md>
-                <FormGroup>
-                    <Form.Label>Due Date (optional)</Form.Label>
-                    <InputGroup>
-                        <Form.Control type="date" placeholder="mm/dd/yyyy" onChange={(event) => updateTask(id, 'dueDate', new Date(event.target.value))}/>
-                        <InputGroup.Text>
-                            <i className="bi bi-calendar"></i>
-                        </InputGroup.Text>
-                    </InputGroup>
-                </FormGroup>
+                    <FormGroup>
+                        <Form.Label>Due Date (optional)</Form.Label>    
+                        <Form.Control 
+                            type="date" 
+                            onChange={(event) => updateTask(id, 'dueDate', new Date(event.target.value))}
+                            min={new Date().toISOString().split("T")[0]} // Today's date
+                            max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // 7 days from today
+                            value={currentTask?.dueDate ? new Date(currentTask.dueDate).toISOString().split("T")[0] : ""}
+                            />
+                        
+                    </FormGroup>
+                
             </Col>
             <Col md>
                 <FormGroup>
                     <Form.Label>Frequency</Form.Label>
-                    <Form.Select title="Pick Priority" aria-label="Pick A Priority" required onChange={(event) => handleDataChange(id, 'frequency', event)}>
+                    <Form.Select 
+                        title="Pick Priority" 
+                        aria-label="Pick A Priority" 
+                        required 
+                        onChange={(event) => handleDataChange(id, 'frequency', event)}
+                        value={currentTask?.frequency || ""}
+                        >
                         <option key='placeholder' hidden value=''>-- Select an Option --</option>
                         <option>1 Day</option>
                         <option>2 Days</option>

@@ -77,7 +77,7 @@ interface ScheduleContext{
     setSchedule: (schedule: Array<ScheduleItem>) => void;
 }
 
-export const ScheduleContext = createContext<ScheduleContext | undefined>(undefined);
+export const ScheduleContext = createContext<ScheduleContext | null>(null);
 
 export const ScheduleContextProvider = ({children}: {children : ReactNode}) =>{
     const [schedule , setSchedule] = useState<Array<ScheduleItem>| null>(null);
