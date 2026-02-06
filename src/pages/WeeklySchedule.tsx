@@ -1,12 +1,12 @@
-import React, {useEffect, useRef, useState} from "react";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import React, {useEffect, useRef, useState, useMemo} from "react";
+import { Button, Container } from "react-bootstrap";
 import { ScheduleItem, useScheduleContext } from "../context/TasksContext";
 import { DndContext , closestCenter} from "@dnd-kit/core";
 import DragableTask from "../components/DragableTask";
 import DropableTask from "../components/DropableTask";
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
-import {validResponse} from '../test/constants.js'
+import { motion } from "framer-motion";
 
 const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     interface reorderedScheduleType  {
@@ -17,8 +17,8 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
         desc: string
     }
 
-    const days = ['SUN', 'MON', 'TUE' ,"WED","THU", "FRI","SAT" ];
-    const hours = [
+    const days = useMemo(() => ['SUN', 'MON', 'TUE' ,"WED","THU", "FRI","SAT" ], []);
+    const hours = useMemo(() => [
   "04:00", "04:30",
   "05:00", "05:30",
   "06:00", "06:30",
@@ -39,57 +39,26 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
   "21:00", "21:30",
   "22:00", "22:30",
   "23:00", "23:30",
-  '24:00'];
+  '24:00'], []);
 
     const {schedule} = useScheduleContext();
     const [ reorderedSchedule, setreorderedSchedule ] = useState<Array<reorderedScheduleType | undefined>>([]);
     const parentDimensionRef = useRef<HTMLDivElement>(null);
     const [dimensions , setDimensions] = useState( {width: 0, height : 0})
-    const pdfRef = useRef(null);
+    const pdfRef = useRef<HTMLDivElement | null>(null);
+    
     const pdfGenerator = async () => {
         console.log('generating pdf');
         const elem = pdfRef.current;
+        if (!elem) return;
         const img = await toPng(elem, { 
             quality: 1,
-            cacheBust: true, // Prevents caching issues
-            useCORS: true // Fixes cross-origin font issues
+            cacheBust: true,
         });
         const pdf = new jsPDF('p', 'mm', 'a4');
-        pdf.addImage(img, 'PNG', 0, 0, 210, 297); // A4 size in mm
+        pdf.addImage(img, 'PNG', 0, 0, 210, 297);
         pdf.save('weekly-schedule.pdf');
     }
-
-    const organizeScheduleByTime = () : Array<reorderedScheduleType| undefined> =>   {
-        let newOrder: Array<reorderedScheduleType| undefined> = [];
-
-        if(schedule){
-            newOrder = schedule.flatMap( (outer, i) => {
-                return outer.when.map( (x,j) => {
-                    console.log(x,'x');
-                    let timeIndex = hours.indexOf( x.startTime);
-                    console.log(timeIndex,'timeindex');
-                    let substringOfDay = x.day.substring(0,3)
-                    let dayIndex = days.indexOf(substringOfDay)
-                    let newId = `${outer.id}:${timeIndex}:${dayIndex}`
-                    return ({
-                    
-                    desc: outer.desc,
-                    reasoning : outer.reasoning,
-                    time: x.startTime,
-                    day: x.day,
-                    id: newId
-                })})
-            })
-            .sort( (a,b) => {
-                if(a.time !== b.time){
-                    return a.time.localeCompare(b.time)
-                }
-
-                return a.day.localeCompare(b.day)
-            })
-        }
-        return newOrder
-    }    
 
     useEffect( () => {
         const handleResize = () => {
@@ -100,35 +69,78 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                 });
             }
         };
+        
+        const organizeScheduleByTime = () : Array<reorderedScheduleType| undefined> =>   {
+            let newOrder: Array<reorderedScheduleType| undefined> = [];
+
+            if(schedule){
+                newOrder = (schedule as any).flatMap( (outer: any, i: number) => {
+                    return outer.when.map( (x: any,j: number) => {
+                        console.log(x,'x');
+                        let timeIndex = hours.indexOf( x.startTime);
+                        console.log(timeIndex,'timeindex');
+                        let substringOfDay = x.day.substring(0,3)
+                        let dayIndex = days.indexOf(substringOfDay)
+                        let newId = `${outer.id}:${timeIndex}:${dayIndex}`
+                        return ({
+                        
+                        desc: outer.desc,
+                        reasoning : outer.reasoning,
+                        time: x.startTime,
+                        day: x.day,
+                        id: newId
+                    })})
+                })
+                .sort( (a: any,b: any) => {
+                    if(a.time !== b.time){
+                        return a.time.localeCompare(b.time)
+                    }
+
+                    return a.day.localeCompare(b.day)
+                })
+            }
+            return newOrder
+        }; 
+        
         handleResize();
         window.addEventListener('resize', handleResize);
 
         const organizedData = organizeScheduleByTime();
         setreorderedSchedule(organizedData);
-        // Cleanup
         return () => window.removeEventListener('resize', handleResize);
-    } ,[])
-
-
-    
-    
-    
+    } ,[schedule, hours, days])
 
     const DrawDays = () => {
         return days.map( (text, i) => {
-            const fontSize = dimensions.width * 0.025; 
+            const fontSize = dimensions.width * 0.020; 
             return (
-                <Col key={i}>
-                    <h4  style={{ fontFamily: 'Roboto Slab', fontSize: fontSize}}> {text} </h4>
-                </Col>
-                
+                <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    style={{
+                        fontFamily: 'Roboto Slab',
+                        fontWeight: '700',
+                        fontSize: fontSize,
+                        color: '#ffffff',
+                        textAlign: 'center',
+                        padding: '12px 8px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        background: 'linear-gradient(135deg, #282c34 0%, #1f2937 100%)',
+                        borderBottom: '2px solid #1a1d24',
+                        borderRight: '1px solid #1a1d24',
+                    }}> 
+                        {text} 
+                    </motion.div>
             )
         })
     }
 
     const handleDragEnd = (e) => {
         const { active, over } = e;
-        if (!over) return; // Don't do anything if not dropped over a valid area
+        if (!over) return;
         let currItem = active.id;
         if(reorderedSchedule){
             const [x,y] = over.id.split(':');
@@ -144,13 +156,10 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                 }
             }
 
-            
             let newTime = hours[x];
             let newDay =  days[y]
 
             setreorderedSchedule((prevSchedule) => {
-
-
                 const updatedSchedule = [...prevSchedule];
                 const taskToUpdate = updatedSchedule.find( x => x?.id === currItem);
                 console.log(taskToUpdate, "BEFOE");
@@ -166,10 +175,9 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                 console.log(taskToUpdate, "AFTER");
                 return updatedSchedule;
             });
-            
         }
-        const draggedTaskId = active.id;  // The dragged task
-        const newColumnId = over.id; // The new drop location
+        const draggedTaskId = active.id;
+        const newColumnId = over.id;
 
         console.log(reorderedSchedule);
         console.log(`Task ${draggedTaskId} dropped on ${newColumnId}`);
@@ -177,22 +185,11 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
 
     const DrawBody = () => {
         const fontSize = dimensions.width * 0.015;
-        const timeSize = dimensions.width * 0.025;
-        /**
-         * OUR DATA WILL LOOK LIKE THIS Array<Array<{time: string, tasks: Array< ScheduleType | null>} >>
-         * [null,null,null,null,{"desc": "taskkkkkkkk4","reasoning": "Eating with mom is a medium priority task, scheduled for the evening when both might be more available.","time": "18:00","day": "Thursday"},null, null]
-         * 
-         * so below we 
-         *  -1 loop through the hours. so our array size will be the size of hours.length
-         *  -2 loop through the days so each of our Arrays will have lenght of 7 since there is 7 days
-         *  -3 we use the .find to search our organizedData to see if theres a task in that specfic time and day
-         *     if it is then we return the task else we return null.
-         * 
-         */
+        const timeSize = dimensions.width * 0.010;
+
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
                 const task: ScheduleItem | undefined  = reorderedSchedule.find((y) => {
-                    //do this since our days are only the first three letters but out response spells out the whole day
                     let substringOfDay = y?.day.substring(0,3)
                     if(y?.time  instanceof(Date) ){
                         y.time = y.time.toString(); 
@@ -203,22 +200,53 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                         return substringOfDay === day && y?.time === matchingHalfAndHour + '30'
                     }
                     return y?.time === hour && substringOfDay === day
-                }) as ScheduleItem | undefined; //casted reorderedSchedule to ScheduleItem
-                return task || null; // Either the task object or null
+                }) as ScheduleItem | undefined;
+                return task || null;
             });
         
-            return { time: hour, tasks }; // Return an object with time and the array of tasks for 7 days
+            return { time: hour, tasks };
         });
 
-        
         console.log(groupedByTimeAndTask)
+        
         return groupedByTimeAndTask.map( ({time,tasks}, i) => {
             const halfHourTimeSlot = time.split(':')[1] === "00" ? true : false 
+            
             return halfHourTimeSlot && (
-                <Row key={i} className="flex-nowrap">
-                    <Col style={{border: '.5px solid black', display:'flex', alignItems:'center', justifyContent: 'center'}}>
-                        <h4  style={{ fontFamily: 'Roboto Slab', fontSize: timeSize}}> {time} </h4>
-                    </Col>
+                <motion.div
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                    style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: '80px repeat(7, 1fr)',
+                        gap: '0',
+                        borderBottom: '1px solid #cbd5e1',
+                        minHeight: '60px',
+                    }}
+                >
+                    <div 
+                        style={{
+                            display:'flex', 
+                            alignItems:'center', 
+                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, #282c34 0%, #1f2937 100%)',
+                            padding: '12px',
+                            borderRight: '2px solid #06b6d4',
+                            boxShadow: 'none',
+                        }}
+                    >
+                        <h5  style={{ 
+                            fontFamily: 'Roboto Slab', 
+                            fontSize: timeSize,
+                            color: '#ddfaff',
+                            fontWeight: '700',
+                            marginBottom: '0'
+                        }}> 
+                            {time} 
+                        </h5>
+                    </div>
                     {
                         tasks.map( (task, j) => {
                             if(task === null){
@@ -227,7 +255,8 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                                         <h4
                                             style={{
                                                 fontFamily: 'Nunito',
-                                                fontSize: fontSize
+                                                fontSize: fontSize,
+                                                color: '#9CA3AF'
                                             }}
                                         >         
                                         </h4>
@@ -244,7 +273,7 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                             
                         }) 
                     }
-                </Row>
+                </motion.div>
         
             )
         })
@@ -253,35 +282,111 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     const backToPlannerBtn = () => {
         setScheduleExist(false)
     }
+    
     return(
-        <div>
-            <div ref={pdfRef}>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+            <div style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+                <motion.h1 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{
+                        textAlign: 'center',
+                        color: '#06b6d4',
+                        fontFamily: 'Roboto Slab',
+                        fontSize: '32px',
+                        fontWeight: '700',
+                        marginBottom: '20px'
+                    }}
+                >
+                    📅 Weekly Schedule
+                </motion.h1>
+            </div>
+            <div ref={pdfRef} style={{ marginBottom: '30px', marginLeft: '10px', marginRight: '10px' }}>
                 <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-                    <Container className="justify-content-sm-start" ref={parentDimensionRef }
-                    //  style={{backgroundImage: 'linear-gradient(45deg, #FFFFFF 0%, #6284FF 50%, #FF0000 100%)', color:'black'}}
-                    style={{backgroundImage: 'linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(125,155,190,1) 47%, rgba(253,187,45,1) 100%)', color:'black'}}
+                    <Container 
+                        className="justify-content-sm-start" 
+                        ref={parentDimensionRef}
+                        style={{
+                            background: '#f8fafc',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                            position: 'relative',
+                            maxWidth: '100%',
+                        }}
                     >
-                        <div>
-                            <Row style={{justifyContent:'center'}}>
-                                <Col/>
-                                {DrawDays()}
-                            </Row>
+                        {/* Header Row with Days */}
+                        <div style={{ 
+                            display: 'grid',
+                            gridTemplateColumns: '80px repeat(7, 1fr)',
+                            gap: '0',
+                            marginBottom: '0',
+                            borderBottom: '2px solid #1a1d24',
+                        }}>
+                            <div style={{
+                                display:'flex', 
+                                alignItems:'center', 
+                                justifyContent: 'center',
+                                borderRight: '2px solid #06b6d4',
+                            }}>
+                            </div>
+                            {DrawDays()}
                         </div>
+                        
+                        {/* Body */}
                         <div>
-                            <Row>
-                                {DrawBody()}
-                            </Row>
+                            {DrawBody()}
                         </div>
 
                     </Container>
                 </DndContext>
-        </div>
-            <div style={
-                {display: "flex", justifyContent:'space-around', margin: "1% 0 0 3%" }
-            }> 
-                <Button onClick={() => backToPlannerBtn()}>Back to planner</Button>
-                <Button onClick={() => pdfGenerator()}>Export to PDF</Button>
             </div>
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                    display: "flex", 
+                    justifyContent:'space-around', 
+                    margin: "20px auto",
+                    maxWidth: '400px',
+                    gap: '12px'
+                }}
+            > 
+                <Button 
+                    onClick={() => backToPlannerBtn()}
+                    style={{
+                        backgroundColor: '#EF4444',
+                        borderColor: '#EF4444',
+                        padding: '10px 24px',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        flex: 1,
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => ((e.target as HTMLElement).style.backgroundColor = '#DC2626')}
+                    onMouseLeave={(e) => ((e.target as HTMLElement).style.backgroundColor = '#EF4444')}
+                >
+                    ← Back to planner
+                </Button>
+                <Button 
+                    onClick={() => pdfGenerator()}
+                    style={{
+                        backgroundColor: '#10B981',
+                        borderColor: '#10B981',
+                        padding: '10px 24px',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        flex: 1,
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => ((e.target as HTMLElement).style.backgroundColor = '#059669')}
+                    onMouseLeave={(e) => ((e.target as HTMLElement).style.backgroundColor = '#10B981')}
+                >
+                    📥 Export to PDF
+                </Button>
+            </motion.div>
         </div>
     )
 }

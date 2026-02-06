@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import React from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 
 interface DragableTaskProps  {
     id: number | string,
@@ -8,24 +9,50 @@ interface DragableTaskProps  {
     data: { parentId: string }
 }
 const DragableTask: React.FC<DragableTaskProps> = ({id, desc, data}) => {
-    const {attributes, listeners, setNodeRef,transform} = useDraggable({id : id, data: data })
+    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({id : id, data: data })
+    const [isHovered, setIsHovered] = useState(false);
 
-    const style = transform ? {
+    const style = {
         transform: CSS.Translate.toString(transform),
-        fontFamily: "Nunito",
-        fontSize: "14px",
-        fontWeight: "bold",
-        padding: "8px",
-        backgroundColor: "#FFD700",
-        borderRadius: "4px",
-        cursor: "grab",
-
-    } : undefined
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1000 : 'auto',
+    }
 
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-            {desc}
-        </div>
+        <motion.div 
+            ref={setNodeRef} 
+            style={style}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            {...listeners} 
+            {...attributes}
+        >
+            <div
+                style={{
+                    backgroundColor: '#06b6d4',
+                    color: 'white',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'grab',
+                    boxShadow: isHovered 
+                        ? '0 8px 16px rgba(6, 182, 212, 0.4)'
+                        : '0 4px 8px rgba(6, 182, 212, 0.2)',
+                    transition: 'box-shadow 0.2s ease',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    fontFamily: 'Nunito',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {desc}
+            </div>
+        </motion.div>
     )
 
 }
