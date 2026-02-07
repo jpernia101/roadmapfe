@@ -48,17 +48,57 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     const pdfRef = useRef<HTMLDivElement | null>(null);
     
     const pdfGenerator = async () => {
-        console.log('generating pdf');
-        const elem = pdfRef.current;
-        if (!elem) return;
+    console.log('generating pdf');
+    const elem = pdfRef.current;
+    if (!elem) return;
+
+    try {
+        // Capture at high DPI for better quality
         const img = await toPng(elem, { 
             quality: 1,
             cacheBust: true,
+            pixelRatio: 2, // Capture at 2x resolution
         });
+
+        // Get the actual dimensions of the element
+        const width = elem.offsetWidth;
+        const height = elem.offsetHeight;
+
+        // A4 dimensions in mm
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 10; // 10mm margin
+        const contentWidth = pageWidth - (margin * 2);
+        const contentHeight = pageHeight - (margin * 2);
+
+        // Calculate the aspect ratio
+        const aspectRatio = width / height;
+
+        // Calculate dimensions to fit on page while maintaining aspect ratio
+        let finalWidth = contentWidth;
+        let finalHeight = contentWidth / aspectRatio;
+
+        // If height exceeds page, scale down
+        if (finalHeight > contentHeight) {
+            finalHeight = contentHeight;
+            finalWidth = contentHeight * aspectRatio;
+        }
+
+        // Create PDF
         const pdf = new jsPDF('p', 'mm', 'a4');
-        pdf.addImage(img, 'PNG', 0, 0, 210, 297);
+        
+        // Add image centered with margins
+        const xPosition = margin + (contentWidth - finalWidth) / 2;
+        const yPosition = margin;
+
+        pdf.addImage(img, 'PNG', xPosition, yPosition, finalWidth, finalHeight);
         pdf.save('weekly-schedule.pdf');
+
+        console.log('PDF generated successfully');
+    } catch (error) {
+        console.error('Error generating PDF:', error);
     }
+};
 
     useEffect( () => {
         const handleResize = () => {
