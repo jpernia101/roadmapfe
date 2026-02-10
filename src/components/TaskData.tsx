@@ -3,7 +3,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import  Form  from "react-bootstrap/Form";
 import { Button, FormGroup } from "react-bootstrap";
-import { InputGroup } from "react-bootstrap";
+// import { InputGroup } from "react-bootstrap";
 import { Task, TasksContextData } from "../context/TasksContext";
 
 const TaskData = ( {id}: {id: number} ) => {
@@ -19,7 +19,7 @@ const TaskData = ( {id}: {id: number} ) => {
     useEffect( () =>{
         let filteredTask = tasks.find( x => x.id === id);
         setCurrentTask(filteredTask);
-    })
+    }, [tasks, id])
     
     return(
         <Row key={id}>

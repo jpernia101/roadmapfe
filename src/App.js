@@ -2,8 +2,8 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './components/Header.tsx';
 import TasksForm from './pages/TasksForm';
-import {ScheduleContextProvider, TasksContextProvider,ScheduleContext} from './context/TasksContext'
-import { useContext } from 'react';
+import {ScheduleContextProvider, TasksContextProvider} from './context/TasksContext'
+// import { useContext } from 'react';
 import WeeklyScheduleCanvas from './pages/WeeklySchedule'
 import { useState } from 'react';
 import { Alert , Container} from 'react-bootstrap';

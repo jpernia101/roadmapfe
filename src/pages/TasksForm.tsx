@@ -15,7 +15,7 @@ interface TasksFormProps {
 
 const TasksForm: React.FC<TasksFormProps> = ({setScheduleExist, isLoading }) => {
     const {tasks, addTask,} = useContext(TasksContextData);
-    const {setSchedule, schedule} = useScheduleContext();
+    const {setSchedule} = useScheduleContext();
     const [showSpinner , setShowSpinner] = useState(false);
     
     /**

@@ -72,12 +72,12 @@ export interface ScheduleItem{
     reasoning: string
 }
 
-interface ScheduleContext{
+interface ScheduleContextType {
     schedule: Array<ScheduleItem> | null,
     setSchedule: (schedule: Array<ScheduleItem>) => void;
 }
 
-export const ScheduleContext = createContext<ScheduleContext | null>(null);
+export const ScheduleContext = createContext<ScheduleContextType | null>(null);
 
 export const ScheduleContextProvider = ({children}: {children : ReactNode}) =>{
     const [schedule , setSchedule] = useState<Array<ScheduleItem>| null>(null);
@@ -91,7 +91,7 @@ export const ScheduleContextProvider = ({children}: {children : ReactNode}) =>{
 }
 
 export const useScheduleContext = () =>{
-    let context = useContext(ScheduleContext);
+    const context = useContext(ScheduleContext);
 
     if(!context){
         throw new Error("useScheduleContext must be used within a ScheduleContextProvider");
