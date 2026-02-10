@@ -4,7 +4,7 @@ import  Form  from "react-bootstrap/Form";
 import { Button } from "react-bootstrap";
 import TaskData from "../components/TaskData";
 import { useScheduleContext, TasksContextData } from "../context/TasksContext";
-import {validResponse} from '../test/constants.js'
+// import {validResponse} from '../test/constants.js'
 import Spinner from "react-bootstrap/Spinner";
 import { submitTask } from "../services/TaskService";
 
@@ -26,24 +26,24 @@ const TasksForm: React.FC<TasksFormProps> = ({setScheduleExist, isLoading }) => 
      */
     const handleSubmit = async () =>{
         setShowSpinner(true);
-        // const response = await submitTask(tasks);
-        // // setSchedule(response)
+        const response = await submitTask(tasks);
+        // setSchedule(response)
         
         
 
-        // if(response){
-        //     console.log('response', response);
-        //     setSchedule(response)
-        //     setScheduleExist(true);
-        //     setShowSpinner(false);
-        // }
-
-        setTimeout( () => {
-            console.log('waiting')
-            setSchedule(validResponse)
+        if(response){
+            console.log('response', response);
+            setSchedule(response)
             setScheduleExist(true);
             setShowSpinner(false);
-        }, 2000)
+        }
+
+        // setTimeout( () => {
+        //     console.log('waiting')
+        //     setSchedule(validResponse)
+        //     setScheduleExist(true);
+        //     setShowSpinner(false);
+        // }, 2000)
     }
 
     useEffect(() => {
