@@ -16,22 +16,80 @@ const TaskData = ( {id}: {id: number} ) => {
         updateTask(id,key, e.target.value);
     }
 
+    // Helper to get today's date in YYYY-MM-DD format (timezone-safe)
+    const getTodayString = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Helper to get max date (7 days from today) in YYYY-MM-DD format
+    const getMaxDateString = () => {
+        const maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 7);
+        const year = maxDate.getFullYear();
+        const month = String(maxDate.getMonth() + 1).padStart(2, '0');
+        const day = String(maxDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        
+        if (!value) {
+            updateTask(id, 'dueDate', null);
+            return;
+        }
+
+        // Validate date is within allowed range (iOS Safari doesn't always respect min/max)
+        const todayStr = getTodayString();
+        const maxDateStr = getMaxDateString();
+        
+        if (value < todayStr) {
+            // Date is before today - reset to today
+            event.target.value = todayStr;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            updateTask(id, 'dueDate', today);
+            return;
+        }
+        
+        if (value > maxDateStr) {
+            // Date is more than 7 days away - reset to max date
+            event.target.value = maxDateStr;
+            const maxDate = new Date();
+            maxDate.setDate(maxDate.getDate() + 7);
+            maxDate.setHours(0, 0, 0, 0);
+            updateTask(id, 'dueDate', maxDate);
+            return;
+        }
+
+        // Date is valid
+        const parsedDate = new Date(value + 'T00:00:00'); // Add time to avoid timezone issues
+        if (isNaN(parsedDate.getTime())) {
+            updateTask(id, 'dueDate', null);
+        } else {
+            updateTask(id, 'dueDate', parsedDate);
+        }
+    }
+
     useEffect( () =>{
         let filteredTask = tasks.find( x => x.id === id);
         setCurrentTask(filteredTask);
     }, [tasks, id])
     
     return(
-        <Row key={id}>
-            <Col md={5}>
+        <Row key={id} className="align-items-end">
+            <Col xs={12} md={5} className="mb-3 mb-md-0">
                 <Form.Label>Task Description</Form.Label>
                 <FormGroup>
                     <Form.Control onChange={(event) => handleDataChange(id, 'desc', event)} value={currentTask?.desc || ""} type='text' placeholder="📝Put a small description of your task"/>
                 </FormGroup>
-                
             </Col>
-            <Col md>
-            <FormGroup>
+            <Col xs={6} md className="mb-3 mb-md-0">
+                <FormGroup>
                     <Form.Label>Priority</Form.Label>
                     <Form.Select 
                         title="Pick Priority" 
@@ -47,38 +105,29 @@ const TaskData = ( {id}: {id: number} ) => {
                     </Form.Select>
                 </FormGroup>
             </Col>
-            <Col md>
-                    <FormGroup>
-                        <Form.Label>Due Date (optional)</Form.Label>    
-                        <Form.Control 
-                            type="date"
-                            onChange={(event) => {
-                                const value = event.target.value;
-                                if (!value) {
-                                    // Clear the date if user deletes or form resets
-                                    updateTask(id, 'dueDate', null);
-                                    return;
-                                }
-                                const parsedDate = new Date(value);
-                                if (isNaN(parsedDate.getTime())) {
-                                    updateTask(id, 'dueDate', null);
-                                } else {
-                                    updateTask(id, 'dueDate', parsedDate);
-                                }
-                            }}
-                            min={new Date().toISOString().split("T")[0]} // Today's date
-                            max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // 7 days from today
-                            value={
-                                currentTask?.dueDate
-                                    ? new Date(currentTask.dueDate).toISOString().split("T")[0]
-                                    : ""
-                            }
-                        />
-                        
-                    </FormGroup>
-                
+            <Col xs={6} md className="mb-3 mb-md-0">
+                <FormGroup>
+                    <Form.Label>Due Date (optional)</Form.Label>    
+                    <Form.Control 
+                        type="date"
+                        onChange={handleDateChange}
+                        min={getTodayString()}
+                        max={getMaxDateString()}
+                        value={
+                            currentTask?.dueDate
+                                ? (() => {
+                                    const date = new Date(currentTask.dueDate);
+                                    const year = date.getFullYear();
+                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                    const day = String(date.getDate()).padStart(2, '0');
+                                    return `${year}-${month}-${day}`;
+                                })()
+                                : ""
+                        }
+                    />
+                </FormGroup>
             </Col>
-            <Col md>
+            <Col xs={6} md className="mb-3 mb-md-0">
                 <FormGroup>
                     <Form.Label>Frequency</Form.Label>
                     <Form.Select 
@@ -99,8 +148,27 @@ const TaskData = ( {id}: {id: number} ) => {
                     </Form.Select>
                 </FormGroup>
             </Col>
-            <Col md>
-                <Button style={{margin:'50px auto'}}variant='danger' onClick={() => removeTask(id)}>&times;</Button>
+            <Col xs={6} md="auto" className="mb-3 mb-md-0">
+                <FormGroup className="mb-0">
+                    <Form.Label style={{ visibility: 'hidden', marginBottom: '0' }}>Remove</Form.Label>
+                    <Button 
+                        variant='danger' 
+                        onClick={() => removeTask(id)}
+                        style={{
+                            height: '38px', // Match Bootstrap form control height
+                            width: '38px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px',
+                            fontWeight: 'bold',
+                            padding: '0',
+                            minWidth: '38px',
+                        }}
+                    >
+                        &times;
+                    </Button>
+                </FormGroup>
             </Col>
         </Row>
     )

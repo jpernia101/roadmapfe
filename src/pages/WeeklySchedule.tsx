@@ -150,9 +150,39 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
         return () => window.removeEventListener('resize', handleResize);
     } ,[schedule, hours, days])
 
+    // Helper function to get dates for the current week
+    const getWeekDates = () => {
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        
+        // Find Sunday of current week
+        const sunday = new Date(today);
+        sunday.setDate(today.getDate() - dayOfWeek);
+        sunday.setHours(0, 0, 0, 0);
+        
+        // Generate dates for each day of the week
+        return days.map((_, index) => {
+            const date = new Date(sunday);
+            date.setDate(sunday.getDate() + index);
+            
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            
+            return `${month}/${day}/${year}`;
+        });
+    }
+
     const DrawDays = () => {
+        const weekDates = getWeekDates();
         return days.map( (text, i) => {
-            const fontSize = dimensions.width * 0.020; 
+            // Responsive font sizing: larger on mobile, capped on desktop
+            const dayNameSize = dimensions.width < 768 
+                ? Math.max(dimensions.width * 0.025, 16) // Mobile: min 16px, scales with width
+                : Math.min(dimensions.width * 0.020, 18); // Desktop: max 18px
+            const dateSize = dimensions.width < 768
+                ? Math.max(dimensions.width * 0.018, 13) // Mobile: min 13px
+                : Math.min(dimensions.width * 0.014, 12); // Desktop: max 12px
             return (
                 <motion.div
                     key={i}
@@ -162,7 +192,7 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     style={{
                         fontFamily: 'Roboto Slab',
                         fontWeight: '700',
-                        fontSize: fontSize,
+                        fontSize: dayNameSize,
                         color: '#ffffff',
                         textAlign: 'center',
                         padding: '12px 8px',
@@ -171,8 +201,22 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                         background: 'linear-gradient(135deg, #282c34 0%, #1f2937 100%)',
                         borderBottom: '2px solid #1a1d24',
                         borderRight: '1px solid #1a1d24',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '4px',
                     }}> 
-                        {text} 
+                        <div>{text}</div>
+                        <div style={{
+                            fontSize: dateSize,
+                            fontWeight: '400',
+                            color: '#cbd5e1',
+                            letterSpacing: '0.5px',
+                            textTransform: 'none',
+                        }}>
+                            {weekDates[i]}
+                        </div>
                     </motion.div>
             )
         })
@@ -224,11 +268,8 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     }
 
     const DrawBody = () => {
-        // const fontSize = dimensions.width * 0.015;
-        // const timeSize = dimensions.width * 0.010;
-
         const fontSize = Math.min(dimensions.width * 0.015, 14); // cap at 14px
-        const timeSize = Math.min(dimensions.width * 0.010, 12); // cap at 12px
+        const timeSize = Math.max(Math.min(dimensions.width * 0.015, 18), 16); // Larger time font: min 16px, max 18px
 
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
@@ -263,11 +304,11 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     transition={{ delay: i * 0.02 }}
                     style={{ 
                         display: 'grid',
-                        gridTemplateColumns: '80px repeat(7, minmax(90px, 1fr))',
+                        gridTemplateColumns: '90px repeat(7, minmax(90px, 1fr))',
                         gap: '0',
                         borderBottom: '1px solid #cbd5e1',
                         minHeight: '60px',
-                        minWidth: '750px',
+                        minWidth: '760px',
                     }}
                 >
                     <div 
@@ -276,7 +317,7 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                             alignItems:'center', 
                             justifyContent: 'center',
                             background: 'linear-gradient(135deg, #282c34 0%, #1f2937 100%)',
-                            padding: '12px',
+                            padding: '14px 12px',
                             borderRight: '2px solid #06b6d4',
                             boxShadow: 'none',
                         }}
@@ -286,7 +327,8 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                             fontSize: timeSize,
                             color: '#ddfaff',
                             fontWeight: '700',
-                            marginBottom: '0'
+                            marginBottom: '0',
+                            lineHeight: '1.2',
                         }}> 
                             {time} 
                         </h5>
@@ -376,11 +418,11 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     >
                         {/* Header row + body share one horizontal scroll container */}
                         <div style={{ overflowX: 'auto' }}>
-                            <div ref={pdfRef} style={{ minWidth: '750px' }}>
+                            <div ref={pdfRef} style={{ minWidth: '760px' }}>
                                 {/* Header Row with Days */}
                                 <div style={{ 
                                     display: 'grid',
-                                    gridTemplateColumns: '80px repeat(7, minmax(90px, 1fr))',
+                                    gridTemplateColumns: '90px repeat(7, minmax(90px, 1fr))',
                                     gap: '0',
                                     marginBottom: '0',
                                     borderBottom: '2px solid #1a1d24',

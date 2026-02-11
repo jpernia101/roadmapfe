@@ -24,7 +24,7 @@ function App() {
               
               <Container>
                 <Alert variant='dark' style={{color: 'darkred', fontSize: '14px'}}>
-                  What is this : An AI tool designed to plan your week, effortlessly organizing your tasks into the perfect schedule.
+                  What is this : An AI-powered scheduler that transforms your tasks into a perfectly organized weekly schedule.
                 </Alert>
                 <Alert variant='dark' style={{color: 'darkred', fontSize: '14px'}}>
                   How to use
