@@ -40,24 +40,24 @@ const TasksForm: React.FC<TasksFormProps> = ({setScheduleExist, isLoading }) => 
         
         
 
-        // if(response){
-        //     console.log('response', response);
-        //     setSchedule(response)
-        //     setScheduleExist(true);
-        //     setShowSpinner(false);
-        // }
-
-        setTimeout( () => {
-            console.log('waiting')
-            setSchedule(validResponse)
+        if(response){
+            console.log('response', response);
+            setSchedule(response)
             setScheduleExist(true);
             setShowSpinner(false);
-        }, 2000)
+        }
+
+        // setTimeout( () => {
+        //     console.log('waiting')
+        //     setSchedule(validResponse)
+        //     setScheduleExist(true);
+        //     setShowSpinner(false);
+        // }, 2000)
     }
 
-    useEffect(() => {
-        console.log('tasks',tasks)
-    })
+    // useEffect(() => {
+    //     console.log('tasks',tasks)
+    // })
     
     return(
         <Container>
