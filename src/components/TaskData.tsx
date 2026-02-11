@@ -51,12 +51,29 @@ const TaskData = ( {id}: {id: number} ) => {
                     <FormGroup>
                         <Form.Label>Due Date (optional)</Form.Label>    
                         <Form.Control 
-                            type="date" 
-                            onChange={(event) => updateTask(id, 'dueDate', new Date(event.target.value))}
+                            type="date"
+                            onChange={(event) => {
+                                const value = event.target.value;
+                                if (!value) {
+                                    // Clear the date if user deletes or form resets
+                                    updateTask(id, 'dueDate', null);
+                                    return;
+                                }
+                                const parsedDate = new Date(value);
+                                if (isNaN(parsedDate.getTime())) {
+                                    updateTask(id, 'dueDate', null);
+                                } else {
+                                    updateTask(id, 'dueDate', parsedDate);
+                                }
+                            }}
                             min={new Date().toISOString().split("T")[0]} // Today's date
                             max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]} // 7 days from today
-                            value={currentTask?.dueDate ? new Date(currentTask.dueDate).toISOString().split("T")[0] : ""}
-                            />
+                            value={
+                                currentTask?.dueDate
+                                    ? new Date(currentTask.dueDate).toISOString().split("T")[0]
+                                    : ""
+                            }
+                        />
                         
                     </FormGroup>
                 

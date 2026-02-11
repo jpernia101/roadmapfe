@@ -24,14 +24,14 @@ function App() {
               
               <Container>
                 <Alert variant='dark' style={{color: 'darkred', fontSize: '14px'}}>
-                  What is this : An automated scheduler that creates a week schedule for you based on your tasks
+                  What is this : An automated scheduler that creates a weekly schedule for you based on your tasks
                 </Alert>
                 <Alert variant='dark' style={{color: 'darkred', fontSize: '14px'}}>
                   How to use
                   <ul>
                     <li>Write a brief description of your task</li>
                     <li>Select the importance of the task</li>
-                    <li>Pick a due date , if there is one</li>
+                    <li>Pick a due date, if there is one</li>
                     <li>Frequency dropdown is for repeating task (e.g: workout 3 times this week so choose 3)</li>
                   </ul>
                   Finally press submit and let us create a shedule for you <br/>

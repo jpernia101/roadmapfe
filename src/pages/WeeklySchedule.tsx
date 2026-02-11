@@ -224,8 +224,11 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
     }
 
     const DrawBody = () => {
-        const fontSize = dimensions.width * 0.015;
-        const timeSize = dimensions.width * 0.010;
+        // const fontSize = dimensions.width * 0.015;
+        // const timeSize = dimensions.width * 0.010;
+
+        const fontSize = Math.min(dimensions.width * 0.015, 14); // cap at 14px
+        const timeSize = Math.min(dimensions.width * 0.010, 12); // cap at 12px
 
         const groupedByTimeAndTask = hours.map((hour) => {
             const tasks = days.map((day) => {
@@ -260,10 +263,11 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     transition={{ delay: i * 0.02 }}
                     style={{ 
                         display: 'grid',
-                        gridTemplateColumns: '80px repeat(7, 1fr)',
+                        gridTemplateColumns: '80px repeat(7, minmax(90px, 1fr))',
                         gap: '0',
                         borderBottom: '1px solid #cbd5e1',
                         minHeight: '60px',
+                        minWidth: '750px',
                     }}
                 >
                     <div 
@@ -335,11 +339,26 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                         fontFamily: 'Roboto Slab',
                         fontSize: '32px',
                         fontWeight: '700',
-                        marginBottom: '20px'
+                        marginBottom: '8px'
                     }}
                 >
                     📅 Weekly Schedule
                 </motion.h1>
+                <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    style={{
+                        textAlign: 'center',
+                        color: '#cbd5e1',
+                        fontFamily: 'Nunito',
+                        fontSize: '14px',
+                        maxWidth: '420px',
+                        margin: '0 auto',
+                    }}
+                >
+                    Feel free to drag the tasks around to fine‑tune your week.
+                </motion.p>
             </div>
             <div ref={pdfRef} style={{ marginBottom: '30px', marginLeft: '10px', marginRight: '10px' }}>
                 <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
@@ -355,27 +374,30 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                             maxWidth: '100%',
                         }}
                     >
-                        {/* Header Row with Days */}
-                        <div style={{ 
-                            display: 'grid',
-                            gridTemplateColumns: '80px repeat(7, 1fr)',
-                            gap: '0',
-                            marginBottom: '0',
-                            borderBottom: '2px solid #1a1d24',
-                        }}>
-                            <div style={{
-                                display:'flex', 
-                                alignItems:'center', 
-                                justifyContent: 'center',
-                                borderRight: '2px solid #06b6d4',
-                            }}>
+                        {/* Header row + body share one horizontal scroll container */}
+                        <div style={{ overflowX: 'auto' }}>
+                            <div style={{ minWidth: '750px' }}>
+                                {/* Header Row with Days */}
+                                <div style={{ 
+                                    display: 'grid',
+                                    gridTemplateColumns: '80px repeat(7, minmax(90px, 1fr))',
+                                    gap: '0',
+                                    marginBottom: '0',
+                                    borderBottom: '2px solid #1a1d24',
+                                }}>
+                                    <div style={{
+                                        display:'flex', 
+                                        alignItems:'center', 
+                                        justifyContent: 'center',
+                                        borderRight: '2px solid #06b6d4',
+                                    }}>
+                                    </div>
+                                    {DrawDays()}
+                                </div>
+
+                                {/* Body */}
+                                {DrawBody()}
                             </div>
-                            {DrawDays()}
-                        </div>
-                        
-                        {/* Body */}
-                        <div>
-                            {DrawBody()}
                         </div>
 
                     </Container>

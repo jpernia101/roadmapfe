@@ -34,9 +34,9 @@ const DragableTask: React.FC<DragableTaskProps> = ({id, desc, data}) => {
                 style={{
                     backgroundColor: '#06b6d4',
                     color: 'white',
-                    padding: '12px 14px',
+                    padding: '8px 10px',
                     borderRadius: '8px',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'grab',
                     boxShadow: isHovered 
@@ -46,8 +46,10 @@ const DragableTask: React.FC<DragableTaskProps> = ({id, desc, data}) => {
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     fontFamily: 'Nunito',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    textOverflow: 'clip',
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                    textAlign: 'center',
                 }}
             >
                 {desc}
