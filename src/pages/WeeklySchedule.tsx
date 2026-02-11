@@ -360,7 +360,7 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     Feel free to drag the tasks around to fine‑tune your week.
                 </motion.p>
             </div>
-            <div ref={pdfRef} style={{ marginBottom: '30px', marginLeft: '10px', marginRight: '10px' }}>
+            <div style={{ marginBottom: '30px', marginLeft: '10px', marginRight: '10px' }}>
                 <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
                     <Container 
                         className="justify-content-sm-start" 
@@ -376,7 +376,7 @@ const WeeklyScheduleCanvas = ( {setScheduleExist, isLoading}) => {
                     >
                         {/* Header row + body share one horizontal scroll container */}
                         <div style={{ overflowX: 'auto' }}>
-                            <div style={{ minWidth: '750px' }}>
+                            <div ref={pdfRef} style={{ minWidth: '750px' }}>
                                 {/* Header Row with Days */}
                                 <div style={{ 
                                     display: 'grid',
